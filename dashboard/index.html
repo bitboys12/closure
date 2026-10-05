@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CLOSURE — Effect-Bound Approval Firewall</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="style.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            cyber: {
+              900: '#090d16',
+              800: '#0f172a',
+              700: '#1e293b',
+              600: '#334155',
+              accent: '#3b82f6',
+              emerald: '#10b981',
+              rose: '#f43f5e',
+              amber: '#f59e0b'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="min-h-screen cyber-grid text-slate-100 flex flex-col antialiased selection:bg-blue-600 selection:text-white">
+
+  <!-- Top Navigation Bar -->
+  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 to-emerald-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
+          <i data-lucide="shield-alert" class="w-6 h-6 text-white"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="font-bold text-xl tracking-tight bg-gradient-to-r from-blue-400 via-emerald-300 to-teal-200 bg-clip-text text-transparent">CLOSURE</h1>
+            <span class="px-2 py-0.5 text-xs font-semibold uppercase tracking-wider rounded-full bg-blue-950/80 text-blue-400 border border-blue-800/60">Effect Firewall</span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block">Don't approve the command. Approve what the command can cause.</p>
+        </div>
+      </div>
+
+      <!-- Live Connection & Invariant Status -->
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2 bg-slate-800/60 border border-slate-700/60 px-3 py-1.5 rounded-lg text-xs">
+          <span id="ws-indicator" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="ws-status" class="font-mono text-slate-300">Gateway Online</span>
+        </div>
+        <div class="hidden md:flex items-center space-x-2 text-xs bg-slate-800/40 border border-slate-700/40 px-3 py-1.5 rounded-lg text-slate-400">
+          <span class="font-mono">Invariant:</span>
+          <span class="font-mono text-emerald-400 font-semibold">Actual ⊆ Approved</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Showcase Workspace -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 flex flex-col space-y-6">
+
+    <!-- Preset Selection Bar -->
+    <section class="glass-panel rounded-2xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div class="flex items-center space-x-2 text-sm text-slate-300">
+        <i data-lucide="sparkles" class="w-4 h-4 text-blue-400"></i>
+        <span class="font-medium">Demonstration Scenarios:</span>
+      </div>
+      <div id="presets-container" class="flex flex-wrap gap-2">
+        <!-- Dynamic Preset Buttons -->
+      </div>
+    </section>
+
+    <!-- Split Grid: Control Plane & Observability Plane -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
+
+      <!-- LEFT COLUMN: The Control Plane (5 Cols) -->
+      <div class="lg:col-span-5 flex flex-col space-y-6">
+
+        <!-- Intercepted AI Agent Request Card -->
+        <div class="glass-panel rounded-2xl p-5 border border-slate-700/60 flex flex-col space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <i data-lucide="bot" class="w-4 h-4 text-blue-400"></i>
+              <span>Intercepted AI Agent Request</span>
+            </div>
+            <span id="session-badge" class="px-2 py-0.5 text-[11px] font-mono rounded bg-slate-800 text-slate-400 border border-slate-700">req-init</span>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-xs font-medium text-slate-400">Target Command</label>
+            <div class="relative">
+              <input id="command-input" type="text"
+                class="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl px-4 py-3 font-mono text-sm text-blue-300 focus:outline-none focus:border-blue-500 transition shadow-inner"
+                value="node packages/rogue-pkg/payload.js" />
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between text-xs text-slate-400">
+            <span class="flex items-center space-x-1">
+              <i data-lucide="folder" class="w-3.5 h-3.5 text-slate-500"></i>
+              <span>Directory: <code id="working-dir" class="font-mono text-slate-300">/workspace</code></span>
+            </span>
+            <button id="re-intercept-btn" class="text-blue-400 hover:text-blue-300 text-xs font-medium flex items-center space-x-1">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+              <span>Re-Evaluate</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Human Approval Firewall: Effect Boundary Card -->
+        <div class="glass-panel rounded-2xl p-5 border border-slate-700/60 flex flex-col space-y-4 flex-1">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+              <span>Synthesized Effect Boundary</span>
+            </div>
+            <span class="text-xs text-slate-500">Human Firewall</span>
+          </div>
+
+          <p class="text-xs text-slate-400 leading-relaxed">
+            CLOSURE translated the agent's intent into explicit runtime privileges. Review the consequences before authorizing execution.
+          </p>
+
+          <!-- Boundary Rules Lists -->
+          <div class="space-y-3.5 text-xs">
+
+            <!-- Allowed Filesystem Read -->
+            <div class="bg-slate-950/60 rounded-xl p-3 border border-slate-800/80">
+              <div class="flex items-center justify-between mb-1.5 font-medium text-slate-300">
+                <span class="flex items-center space-x-1.5">
+                  <i data-lucide="file-check" class="w-3.5 h-3.5 text-emerald-400"></i>
+                  <span>Allowed Read Paths</span>
+                </span>
+                <span class="text-[10px] text-emerald-400 bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-800/40">✓ Safe</span>
+              </div>
+              <div id="boundary-reads" class="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
+                <span class="px-2 py-0.5 rounded bg-slate-800/80 text-slate-300 font-mono text-[11px]">/workspace/**</span>
+                <span class="px-2 py-0.5 rounded bg-slate-800/80 text-slate-300 font-mono text-[11px]">/usr/**</span>
+                <span class="px-2 py-0.5 rounded bg-slate-800/80 text-slate-300 font-mono text-[11px]">/lib/**</span>
+              </div>
+            </div>
+
+            <!-- Denied Sensitive Blacklist -->
+            <div class="bg-rose-950/20 rounded-xl p-3 border border-rose-900/40">
+              <div class="flex items-center justify-between mb-1.5 font-medium text-rose-300">
+                <span class="flex items-center space-x-1.5">
+                  <i data-lucide="shield-x" class="w-3.5 h-3.5 text-rose-400"></i>
+                  <span>Denied Sensitive Targets</span>
+                </span>
+                <span class="text-[10px] text-rose-400 bg-rose-950/80 px-2 py-0.5 rounded border border-rose-800/60 font-semibold">✗ STRICT BLOCK</span>
+              </div>
+              <div id="boundary-denies" class="flex flex-wrap gap-1.5">
+                <span class="px-2 py-0.5 rounded bg-rose-950/80 text-rose-300 font-mono text-[11px] border border-rose-800/40">/etc/passwd</span>
+                <span class="px-2 py-0.5 rounded bg-rose-950/80 text-rose-300 font-mono text-[11px] border border-rose-800/40">/etc/shadow</span>
+                <span class="px-2 py-0.5 rounded bg-rose-950/80 text-rose-300 font-mono text-[11px] border border-rose-800/40">~/.ssh/**</span>
+                <span class="px-2 py-0.5 rounded bg-rose-950/80 text-rose-300 font-mono text-[11px] border border-rose-800/40">~/.aws/**</span>
+              </div>
+            </div>
+
+            <!-- Allowed Executables & Network -->
+            <div class="grid grid-cols-2 gap-3">
+              <div class="bg-slate-950/60 rounded-xl p-3 border border-slate-800/80">
+                <span class="font-medium text-slate-300 block mb-1">Approved Binaries</span>
+                <div id="boundary-execs" class="flex flex-wrap gap-1">
+                  <span class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono text-[10px]">node</span>
+                  <span class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono text-[10px]">npm</span>
+                  <span class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono text-[10px]">sh</span>
+                </div>
+              </div>
+
+              <div class="bg-slate-950/60 rounded-xl p-3 border border-slate-800/80">
+                <span class="font-medium text-slate-300 block mb-1">Network Hosts</span>
+                <div id="boundary-network" class="flex flex-wrap gap-1">
+                  <span class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono text-[10px]">registry.npmjs.org</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Human Action Decision Buttons -->
+          <div class="pt-3 border-t border-slate-800/80 flex items-center space-x-3">
+            <button id="approve-btn"
+              class="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold py-3 px-4 rounded-xl text-sm transition flex items-center justify-center space-x-2 shadow-lg shadow-emerald-900/30 glow-emerald">
+              <i data-lucide="play" class="w-4 h-4"></i>
+              <span>Approve & Enforce</span>
+            </button>
+            <button id="reject-btn"
+              class="bg-slate-800 hover:bg-rose-950/60 hover:text-rose-400 border border-slate-700 hover:border-rose-800 text-slate-300 font-semibold py-3 px-4 rounded-xl text-sm transition flex items-center space-x-2">
+              <i data-lucide="x" class="w-4 h-4"></i>
+              <span>Reject</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: The Observability Plane (7 Cols) -->
+      <div class="lg:col-span-7 flex flex-col space-y-6">
+
+        <!-- Violation Alert Banner (Hidden by default, pulses when violation occurs) -->
+        <div id="violation-card" class="hidden rounded-2xl bg-gradient-to-r from-rose-950/90 via-red-950/90 to-slate-900 p-5 border-2 border-rose-600 shadow-2xl animate-alert glow-rose">
+          <div class="flex items-start space-x-4">
+            <div class="p-3 bg-rose-600 rounded-xl text-white shadow-lg shadow-rose-600/50 animate-bounce">
+              <i data-lucide="alert-octagon" class="w-7 h-7"></i>
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
+                <h3 class="font-bold text-lg text-rose-200 tracking-wide uppercase">Effect Boundary Violation Detected</h3>
+                <span class="px-2.5 py-1 text-xs font-bold rounded-lg bg-rose-600 text-white font-mono tracking-wider shadow">INSTANT SIGKILL</span>
+              </div>
+              <p id="violation-reason" class="text-sm text-rose-300 mt-1">Unauthorized access to /etc/passwd outside approved boundary.</p>
+
+              <div class="mt-3 grid grid-cols-3 gap-2 text-xs font-mono bg-black/40 p-3 rounded-xl border border-rose-900/60">
+                <div>
+                  <span class="text-slate-500 block text-[10px] uppercase">Syscall</span>
+                  <span id="violation-syscall" class="text-rose-400 font-bold">openat</span>
+                </div>
+                <div>
+                  <span class="text-slate-500 block text-[10px] uppercase">Target Resource</span>
+                  <span id="violation-target" class="text-rose-300 truncate block">/etc/passwd</span>
+                </div>
+                <div>
+                  <span class="text-slate-500 block text-[10px] uppercase">Action Taken</span>
+                  <span class="text-emerald-400 font-semibold">SIGKILL (Terminated)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Syscall Telemetry Feed -->
+        <div class="glass-panel rounded-2xl border border-slate-700/60 flex-1 flex flex-col overflow-hidden shadow-2xl relative min-h-[460px]">
+          <div class="terminal-scanline"></div>
+
+          <!-- Terminal Window Header -->
+          <div class="px-4 py-3 bg-slate-950/80 border-b border-slate-800/80 flex items-center justify-between text-xs">
+            <div class="flex items-center space-x-2">
+              <div class="flex space-x-1.5">
+                <span class="w-3 h-3 rounded-full bg-rose-500/80"></span>
+                <span class="w-3 h-3 rounded-full bg-amber-500/80"></span>
+                <span class="w-3 h-3 rounded-full bg-emerald-500/80"></span>
+              </div>
+              <span class="font-mono text-slate-400 font-medium ml-2">CLOSURE Kernel Telemetry Stream (strace ptrace)</span>
+            </div>
+            <div class="flex items-center space-x-3 text-slate-400 font-mono">
+              <span id="event-count-badge" class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[11px]">0 events</span>
+              <button id="clear-terminal-btn" class="hover:text-slate-200 transition" title="Clear terminal">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Terminal Console Body -->
+          <div id="terminal-body" class="flex-1 p-4 font-mono text-xs overflow-y-auto space-y-1.5 bg-[#070b13] select-text">
+            <div class="text-slate-500 italic">CLOSURE ready. Select a scenario on the left and click "Approve & Enforce" to observe real-time syscall telemetry.</div>
+          </div>
+
+          <!-- Terminal Footer Status Bar -->
+          <div class="px-4 py-2 bg-slate-950/90 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <div class="flex items-center space-x-4">
+              <span>Status: <span id="execution-state" class="text-slate-300">IDLE</span></span>
+              <span>Filter: <code class="text-blue-400">openat, execve, connect</code></span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+              <span class="text-slate-400">Sandbox Isolation Active</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>

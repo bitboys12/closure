@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  closure-sandbox:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: closure-sandbox:latest
+    container_name: closure_sandbox_runner
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+    volumes:
+      - ./:/workspace
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+    environment:
+      - CLOSURE_ENV=sandbox

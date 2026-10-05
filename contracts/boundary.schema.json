@@ -1,0 +1,99 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ClosureEffectBoundaryContract",
+  "description": "Schema for CLOSURE Effect-Bound Approval requests, boundary definitions, and runtime enforcement states.",
+  "type": "object",
+  "required": [
+    "session_id",
+    "timestamp",
+    "command",
+    "status",
+    "boundary"
+  ],
+  "properties": {
+    "session_id": {
+      "type": "string",
+      "description": "Unique UUID for the agent command interception session"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of command interception"
+    },
+    "agent_id": {
+      "type": "string",
+      "description": "Identifier of the requesting AI agent"
+    },
+    "command": {
+      "type": "string",
+      "description": "The exact CLI command intercepted"
+    },
+    "working_directory": {
+      "type": "string",
+      "description": "Execution working directory path inside sandbox"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PENDING_APPROVAL",
+        "APPROVED",
+        "REJECTED",
+        "RUNNING",
+        "COMPLETED_ALLOWED",
+        "TERMINATED_VIOLATION"
+      ],
+      "description": "Current lifecycle status of the interception session"
+    },
+    "boundary": {
+      "type": "object",
+      "required": [
+        "allowed_read_paths",
+        "allowed_write_paths",
+        "allowed_network_hosts",
+        "allowed_executables"
+      ],
+      "properties": {
+        "allowed_read_paths": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Glob patterns or absolute paths permitted for file reading"
+        },
+        "allowed_write_paths": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Glob patterns or absolute paths permitted for file write/create/delete"
+        },
+        "allowed_network_hosts": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Permitted outbound IP addresses, subnets, or domain names (e.g. registry.npmjs.org)"
+        },
+        "allowed_executables": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of permitted binary names or paths allowed in execve"
+        },
+        "deny_sensitive_paths": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Explicit blacklisted paths that trigger instant hard block (e.g. /etc/shadow, ~/.ssh, /etc/passwd)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "violation": {
+      "type": "object",
+      "properties": {
+        "syscall": { "type": "string" },
+        "target": { "type": "string" },
+        "category": {
+          "type": "string",
+          "enum": ["FILESYSTEM_READ", "FILESYSTEM_WRITE", "NETWORK_OUTBOUND", "EXEC_UNAUTHORIZED"]
+        },
+        "details": { "type": "string" },
+        "timestamp": { "type": "string" }
+      }
+    }
+  },
+  "additionalProperties": false
+}

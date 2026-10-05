@@ -1,0 +1,54 @@
+{
+  "session_id": "req-987f6e21-0a3b-4c5d-8e7f-112233445566",
+  "timestamp": "2026-10-04T10:15:00Z",
+  "agent_id": "claude-code-agent-v1",
+  "command": "npm install ./packages/rogue-pkg",
+  "working_directory": "/workspace/demo_app",
+  "status": "PENDING_APPROVAL",
+  "boundary": {
+    "allowed_read_paths": [
+      "/workspace/**",
+      "/usr/**",
+      "/lib/**",
+      "/lib64/**",
+      "/etc/**",
+      "/dev/**",
+      "/proc/**",
+      "/sys/**",
+      "/tmp/**"
+    ],
+    "allowed_write_paths": [
+      "/workspace/demo_app/node_modules/**",
+      "/workspace/demo_app/package.json",
+      "/workspace/demo_app/package-lock.json",
+      "/workspace/**",
+      "/root/.npm/**",
+      "/dev/tty",
+      "/dev/null",
+      "/dev/pts/**",
+      "/dev/stderr",
+      "/dev/stdout",
+      "/tmp/**"
+    ],
+    "allowed_network_hosts": [
+      "registry.npmjs.org",
+      "registry.yarnpkg.com"
+    ],
+    "allowed_executables": [
+      "npm",
+      "node",
+      "sh",
+      "bash"
+    ],
+    "deny_sensitive_paths": [
+      "/etc/passwd",
+      "/etc/shadow",
+      "/etc/gshadow",
+      "/etc/sudoers",
+      "/root/.ssh/**",
+      "/root/.aws/**",
+      "/root/.gnupg/**",
+      "/proc/kcore"
+    ]
+  }
+}

